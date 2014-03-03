@@ -1,4 +1,5 @@
 shell = require 'shelljs'
+path = require 'path'
 
 module.exports =
 
@@ -25,11 +26,18 @@ module.exports =
   #
   run: ->
     cmd = "make #{atom.config.get('make-runner.buildTarget')}"
-    shell.exec cmd, (code) =>
-      @updateStatus "exited with code #{code}"
+    dir = path.dirname atom.workspace.getActiveEditor().getUri() || process.cwd()
+
+    shell.cd dir
+    shell.exec cmd, (code, output) =>
+      if code != 0
+        @updateStatus "failed with code #{code}"
+      else
+        @updateStatus 'succeeded'
+
       setTimeout (=>
         @clearStatus()
-      ), 2000
+      ), 3000
 
   #
   # Deactivate the package.
