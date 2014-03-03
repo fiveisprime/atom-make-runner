@@ -1,0 +1,22 @@
+{
+  "name": "make-runner",
+  "version": "0.0.0",
+  "description": "Make runner for the Atom editor.",
+  "author": "Matt Hernandez <matt@modulus.io>",
+  "private": true,
+  "main": "lib/make-runner.coffee",
+  "activationEvents": [
+    "make-runner:run"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/fiveisprime/atom-make-runner.git"
+  },
+  "engines": {
+    "atom": ">=0.60.0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "shelljs": "^0.2.6"
+  }
+}

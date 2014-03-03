@@ -1,0 +1,46 @@
+shell = require 'shelljs'
+
+module.exports =
+
+  #
+  # Write the status of the make target to the status bar.
+  #
+  updateStatus: (message) ->
+    atom.workspaceView.statusBar.appendLeft "<span id=\"make-runner\">Make: #{message}</span>"
+
+  #
+  # Clear the make result from the status bar.
+  #
+  clearStatus: ->
+    atom.workspaceView.statusBar.find('#make-runner').remove()
+
+  #
+  # Attach the run command.
+  #
+  activate: ->
+    atom.workspaceView.command 'make-runner:run', '.editor', => @run()
+
+  #
+  # Run the configured make target.
+  #
+  run: ->
+    cmd = "make #{atom.config.get('make-runner.buildTarget')}"
+    shell.exec cmd, (code) =>
+      @updateStatus "exited with code #{code}"
+      setTimeout (=>
+        @clearStatus()
+      ), 2000
+
+  #
+  # Deactivate the package.
+  #
+  deactivate: ->
+    @clearStatus()
+
+  serialize: ->
+
+  #
+  # Set the default build target.
+  #
+  configDefaults:
+    buildTarget: 'test'
