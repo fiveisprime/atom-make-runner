@@ -30,10 +30,10 @@ module.exports =
 
     shell.cd dir
     shell.exec cmd, (code, output) =>
-      if code != 0
-        @updateStatus "failed with code #{code}"
-      else
+      if code is 0
         @updateStatus 'succeeded'
+      else
+        @updateStatus "failed with code #{code}"
 
       setTimeout (=>
         @clearStatus()
