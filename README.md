@@ -10,4 +10,4 @@ User `ctrl-r` to run the default task.
 
 Check the status bar (at the bottom) for the result.
 
-![](screenshot.png)
+![](http://cl.ly/image/1b2H0X0r350K/make-runner.png)
