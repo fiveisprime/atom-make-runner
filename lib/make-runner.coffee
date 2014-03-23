@@ -51,4 +51,4 @@ module.exports =
   # Set the default build target.
   #
   configDefaults:
-    buildTarget: 'test'
+    buildTarget: ''
