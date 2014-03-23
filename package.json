@@ -1,6 +1,6 @@
 {
   "name": "make-runner",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Make runner for the Atom editor.",
   "author": "Matt Hernandez <matt@modulus.io>",
   "private": true,
