@@ -7,6 +7,7 @@ module.exports =
   # Write the status of the make target to the status bar.
   #
   updateStatus: (message) ->
+    atom.workspaceView.statusBar.find('#make-runner').remove()
     atom.workspaceView.statusBar.appendLeft "<span id=\"make-runner\">Make: #{message}</span>"
 
   #
@@ -25,10 +26,14 @@ module.exports =
   # Run the configured make target.
   #
   run: ->
-    cmd = "make #{atom.config.get('make-runner.buildTarget')}"
-    dir = path.dirname atom.workspace.getActiveEditor().getUri() || process.cwd()
+    target = atom.config.get('make-runner.buildTarget')
 
-    shell.cd dir
+    if target?.length
+      cmd = "make #{target}"
+    else
+      cmd = 'make'
+
+    shell.cd atom.project.path
     shell.exec cmd, (code, output) =>
       if code is 0
         @updateStatus 'succeeded'
