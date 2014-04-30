@@ -98,6 +98,10 @@ module.exports =
     stderr.on 'line',  (line) =>
       # TODO: search for file:line:col: references
       # /^([^:]):(\d+):(\d+):/.exec(line)
+      ## load file, but check if it is already open in any of the panes
+      # loading = atom.workspaceView.open new_path, { searchAllPanes: true }
+      # loading.done (editor) =>
+      #   editor.setCursorBufferPosition [row, col]
       @makeRunnerView.printError line
 
     # fire this off when the make process comes to an end
