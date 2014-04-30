@@ -47,11 +47,11 @@ module.exports =
         return
 
     if target?.length
-      cmd = "cd #{make_path} && make #{target}"
+      cmd = "make #{target}"
     else
-      cmd = "cd #{make_path} && make"
+      cmd = "make"
 
-    shell.cd atom.project.path
+    shell.cd make_path
     shell.exec cmd, (code, output) =>
       if code is 0
         @updateStatus 'succeeded'
