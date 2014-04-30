@@ -1,5 +1,6 @@
 shell = require 'shelljs'
 path = require 'path'
+fs = require 'fs-plus'
 
 module.exports =
 
@@ -28,10 +29,28 @@ module.exports =
   run: ->
     target = atom.config.get('make-runner.buildTarget')
 
+    # Get the path of the current file
+    editor = atom.workspace.activePaneItem
+    make_path = editor.getUri()
+
+    while not fs.existsSync "#{make_path}/Makefile"
+      console.log("#{make_path}/Makefile")
+      previous_path = make_path
+      make_path = path.join(make_path, '..')
+
+      if make_path == previous_path
+        @updateStatus "no makefile found"
+
+        setTimeout (=>
+          @clearStatus()
+        ), 3000
+
+        return
+
     if target?.length
-      cmd = "make #{target}"
+      cmd = "cd #{make_path} && make #{target}"
     else
-      cmd = 'make'
+      cmd = "cd #{make_path} && make"
 
     shell.cd atom.project.path
     shell.exec cmd, (code, output) =>

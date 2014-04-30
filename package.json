@@ -17,6 +17,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "shelljs": "^0.2.6"
+    "shelljs": "^0.2.6",
+    "fs-plus": "^2.0.4"
   }
 }
