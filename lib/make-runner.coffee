@@ -1,4 +1,4 @@
-shell = require 'shelljs'
+cp = require 'child_process'
 path = require 'path'
 fs = require 'fs-plus'
 
