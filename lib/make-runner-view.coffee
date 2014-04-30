@@ -31,7 +31,10 @@ class MakeRunnerView extends View
       console.log "atom-make-runner-view was switched on!", this
 
   print: (line) ->
-    @canvas.append '<p>'+line+'</p>'
+    @canvas.append "<div class='make-runner-output'>#{line}</div>"
+
+  printError: (line) ->
+    @canvas.append "<div class='make-runner-error'>#{line}</div>"
 
   clear: ->
     @canvas.empty()

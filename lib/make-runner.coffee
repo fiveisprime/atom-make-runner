@@ -87,11 +87,11 @@ module.exports =
     stderr = readline.createInterface { input: make.stderr, terminal: false }
 
     stdout.on 'line',  (line) =>
-      @makeRunnerView.print 'stdout:' + line
+      @makeRunnerView.print line
 
     stderr.on 'line',  (line) =>
       # TODO: search for file:line:col: references
-      @makeRunnerView.print 'stderr:' + line
+      @makeRunnerView.printError line
 
     # fire this off when the make process comes to an end
     make.on 'close',  (code) =>
