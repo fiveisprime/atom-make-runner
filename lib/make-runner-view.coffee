@@ -30,11 +30,21 @@ class MakeRunnerView extends View
       atom.workspaceView.prependToBottom(this)
       console.log "atom-make-runner-view was switched on!", this
 
-  print: (line) ->
-    @canvas.append "<div class='make-runner-output'>#{line}</div>"
+  print: (line, type) ->
+    # if we are scrolled all the way down we follow the output
+    panel = @canvas.parent()
+    at_bottom = (panel.scrollTop() + panel.height() + 10 > panel[0].scrollHeight)
+
+    @canvas.append "<div class='make-runner-#{type}'>#{line}</div>"
+
+    if at_bottom
+      panel.scrollTop(panel[0].scrollHeight)
+
+  printOutput: (line) ->
+    @print line, 'output'
 
   printError: (line) ->
-    @canvas.append "<div class='make-runner-error'>#{line}</div>"
+    @print line, 'error'
 
   clear: ->
     @canvas.empty()

@@ -83,14 +83,14 @@ module.exports =
 
     # Use readline to generate line input from raw data
     stdout = readline.createInterface { input: make.stdout, terminal: false }
-
     stderr = readline.createInterface { input: make.stderr, terminal: false }
 
     stdout.on 'line',  (line) =>
-      @makeRunnerView.print line
+      @makeRunnerView.printOutput line
 
     stderr.on 'line',  (line) =>
       # TODO: search for file:line:col: references
+      # /^([^:]):(\d+):(\d+):/.exec(line) 
       @makeRunnerView.printError line
 
     # fire this off when the make process comes to an end
