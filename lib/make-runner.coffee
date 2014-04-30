@@ -34,7 +34,6 @@ module.exports =
     make_path = editor.getUri()
 
     while not fs.existsSync "#{make_path}/Makefile"
-      console.log("#{make_path}/Makefile")
       previous_path = make_path
       make_path = path.join(make_path, '..')
 
