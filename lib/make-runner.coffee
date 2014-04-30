@@ -3,11 +3,18 @@ path = require 'path'
 fs = require 'fs-plus'
 readline = require 'readline'
 
+MakeRunnerView = require './make-runner-view'
+
 module.exports =
   #
   # Lock flag for running make processes (to avoid running make multiple times concurrently)
   #
-  make_running: false
+  makeRunning: false
+
+  #
+  # Make output pane
+  #
+  makeRunnerView: null
 
   #
   # Write the status of the make target to the status bar.
@@ -25,15 +32,16 @@ module.exports =
   #
   # Attach the run command.
   #
-  activate: ->
+  activate: (state) ->
     atom.workspaceView.command 'make-runner:run', '.editor', => @run()
+    @makeRunnerView = new MakeRunnerView(state.makeRunnerViewState)
 
   #
   # Run the configured make target.
   #
   run: ->
     # guard against launching make while it is still running
-    if @make_running
+    if @makeRunning
       return
 
     target = atom.config.get('make-runner.buildTarget')
@@ -68,7 +76,9 @@ module.exports =
 
     # spawn make child process
     @updateStatus "running make..."
-    @make_running = true
+    @makeRunnerView.show()
+    @makeRunnerView.clear()
+    @makeRunning = true
     make = cp.spawn 'make', args, { cwd: make_path }
 
     # Use readline to generate line input from raw data
@@ -77,10 +87,11 @@ module.exports =
     stderr = readline.createInterface { input: make.stderr, terminal: false }
 
     stdout.on 'line',  (line) =>
-      console.log('stdout:', line)
+      @makeRunnerView.print 'stdout:' + line
 
     stderr.on 'line',  (line) =>
-      console.log('stderr:', line)
+      # TODO: search for file:line:col: references
+      @makeRunnerView.print 'stderr:' + line
 
     # fire this off when the make process comes to an end
     make.on 'close',  (code) =>
@@ -89,7 +100,7 @@ module.exports =
       else
         @updateStatus "failed with code #{code}"
 
-      @make_running = false
+      @makeRunning = false
 
       setTimeout (=>
         @clearStatus()
@@ -100,8 +111,10 @@ module.exports =
   #
   deactivate: ->
     @clearStatus()
+    @makeRunnerView.destroy()
 
   serialize: ->
+    makeRunnerViewState: @makeRunnerView.serialize()
 
   #
   # Set the default build target.
