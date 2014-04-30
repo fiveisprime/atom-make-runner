@@ -1,2 +1,3 @@
 '.workspace':
   'ctrl-r': 'make-runner:run'
+  'ctrl-shift-r': 'make-runner:toggle'

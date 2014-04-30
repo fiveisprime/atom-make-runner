@@ -34,7 +34,14 @@ module.exports =
   #
   activate: (state) ->
     atom.workspaceView.command 'make-runner:run', '.editor', => @run()
+    atom.workspaceView.command 'make-runner:toggle', '.editor', => @toggle()
     @makeRunnerView = new MakeRunnerView(state.makeRunnerViewState)
+
+  #
+  # Show/hide the make pane without re-running make
+  #
+  toggle: ->
+    @makeRunnerView.toggle()
 
   #
   # Run the configured make target.
@@ -90,7 +97,7 @@ module.exports =
 
     stderr.on 'line',  (line) =>
       # TODO: search for file:line:col: references
-      # /^([^:]):(\d+):(\d+):/.exec(line) 
+      # /^([^:]):(\d+):(\d+):/.exec(line)
       @makeRunnerView.printError line
 
     # fire this off when the make process comes to an end
