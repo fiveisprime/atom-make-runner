@@ -34,7 +34,6 @@ module.exports =
     make_path = editor.getUri()
 
     while not fs.existsSync "#{make_path}/Makefile"
-      console.log("#{make_path}/Makefile")
       previous_path = make_path
       make_path = path.join(make_path, '..')
 
@@ -48,11 +47,11 @@ module.exports =
         return
 
     if target?.length
-      cmd = "cd #{make_path} && make #{target}"
+      cmd = "make #{target}"
     else
-      cmd = "cd #{make_path} && make"
+      cmd = "make"
 
-    shell.cd atom.project.path
+    shell.cd make_path
     shell.exec cmd, (code, output) =>
       if code is 0
         @updateStatus 'succeeded'
