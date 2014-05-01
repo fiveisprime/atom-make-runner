@@ -2,6 +2,7 @@ cp = require 'child_process'
 path = require 'path'
 fs = require 'fs-plus'
 readline = require 'readline'
+$ = require('atom').$
 
 MakeRunnerView = require './make-runner-view'
 
@@ -96,13 +97,24 @@ module.exports =
       @makeRunnerView.printOutput line
 
     stderr.on 'line',  (line) =>
-      # TODO: search for file:line:col: references
-      # /^([^:]):(\d+):(\d+):/.exec(line)
-      ## load file, but check if it is already open in any of the panes
-      # loading = atom.workspaceView.open new_path, { searchAllPanes: true }
-      # loading.done (editor) =>
-      #   editor.setCursorBufferPosition [row, col]
-      @makeRunnerView.printError line
+      # search for file:line:col: references
+      html_line = null
+      line.replace /^([^:]+):(\d+):(\d+):(.*)$/, (match, file, row, col, errormessage) =>
+        html_line = [
+          $('<a>')
+            .text "#{file}:#{row}:#{col}"
+            .attr 'href', '#'
+            .on 'click', (e) =>
+              e.preventDefault()
+
+              # load file, but check if it is already open in any of the panes
+              loading = atom.workspaceView.open file, { searchAllPanes: true }
+              loading.done (editor) =>
+                editor.setCursorBufferPosition [row-1, col-1],
+          $('<span>').text errormessage
+        ]
+
+      @makeRunnerView.printError html_line || line
 
     # fire this off when the make process comes to an end
     make.on 'close',  (code) =>

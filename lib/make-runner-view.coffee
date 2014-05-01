@@ -1,4 +1,5 @@
 {View} = require 'atom'
+$ = require('atom').$
 
 module.exports =
 class MakeRunnerView extends View
@@ -32,7 +33,7 @@ class MakeRunnerView extends View
     panel = @canvas.parent()
     at_bottom = (panel.scrollTop() + panel.height() + 10 > panel[0].scrollHeight)
 
-    @canvas.append "<div class='make-runner-#{type}'>#{line}</div>"
+    @canvas.append $("<div class='make-runner-#{type}'></div>").append line
 
     if at_bottom
       panel.scrollTop(panel[0].scrollHeight)
