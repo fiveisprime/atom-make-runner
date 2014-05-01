@@ -31,7 +31,7 @@ class MakeRunnerView extends View
   print: (line, type) ->
     # if we are scrolled all the way down we follow the output
     panel = @canvas.parent()
-    at_bottom = (panel.scrollTop() + panel.height() + 10 > panel[0].scrollHeight)
+    at_bottom = (panel.scrollTop() + panel.height() + 30 > panel[0].scrollHeight)
 
     @canvas.append $("<div class='make-runner-#{type}'></div>").append line
 
