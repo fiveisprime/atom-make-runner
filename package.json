@@ -3,6 +3,7 @@
   "version": "0.2.1",
   "description": "Make runner for the Atom editor.",
   "author": "Matt Hernandez <matt@modulus.io>",
+  "contributors": ["Daniel Schwen <daniel@schwen.de> (http://www.schwen.de/)"],
   "private": true,
   "main": "lib/make-runner.coffee",
   "activationEvents": [
@@ -17,7 +18,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "shelljs": "^0.2.6",
     "fs-plus": "^2.0.4"
   }
 }

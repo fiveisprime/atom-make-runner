@@ -1,0 +1,23 @@
+// The ui-variables file is provided by base themes provided by Atom.
+//
+// See https://github.com/atom/atom-dark-ui/blob/master/stylesheets/ui-variables.less
+// for a full listing of what's available.
+@import "ui-variables";
+
+.atom-make-runner {
+  overflow: scroll;
+  max-height: 350px;
+  padding: 10px;
+
+  .make-runner-output {
+    padding-left: 1em;
+    border-left: 3px solid green;
+  }
+  .make-runner-error {
+    padding-left: 1em;
+    border-left: 3px solid red;
+
+    // not pretty, but clang uses ascii-art to point at errors
+    font-family: monospace;
+  }
+}
