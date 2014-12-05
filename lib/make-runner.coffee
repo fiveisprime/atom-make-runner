@@ -120,6 +120,10 @@ module.exports =
     make.on 'close',  (code) =>
       if code is 0
         @updateStatus 'succeeded'
+        if atom.config.get('make-runner.hidePane')
+          setTimeout (=>
+            @makeRunnerView.destroy()
+          ), atom.config.get('make-runner.hidePaneDelay')
       else
         @updateStatus "failed with code #{code}"
 
@@ -144,3 +148,12 @@ module.exports =
   #
   configDefaults:
     buildTarget: ''
+  config:
+    hidePane:
+      type: 'boolean'
+      default: false
+      description: 'Hide make panel if execution is successful.'
+    hidePaneDelay:
+      type: 'integer'
+      default: 3000
+      min:0
