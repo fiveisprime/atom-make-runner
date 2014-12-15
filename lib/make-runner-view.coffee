@@ -35,14 +35,19 @@ class MakeRunnerView extends View
 
     @canvas.append $("<div class='make-runner-#{type}'></div>").append line
 
-    if at_bottom
+    if at_bottom and not @had_error
       panel.scrollTop(panel[0].scrollHeight)
 
   printOutput: (line) ->
     @print line, 'output'
 
   printError: (line) ->
+    @had_error = true
     @print line, 'error'
 
+  printWarning: (line) ->
+    @print line, 'warning'
+
   clear: ->
+    @had_error = false
     @canvas.empty()

@@ -4,7 +4,8 @@
   "description": "Make runner for the Atom editor.",
   "author": "Matt Hernandez <matt@modulus.io>",
   "contributors": [
-    "Daniel Schwen <daniel@schwen.de> (http://www.schwen.de/)"
+    "Daniel Schwen <daniel@schwen.de> (http://www.schwen.de/)", 
+    "Sergey Egorov <egorovhome@gmail.com>"
   ],
   "private": true,
   "main": "lib/make-runner.coffee",
