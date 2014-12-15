@@ -52,6 +52,8 @@ module.exports =
     if @makeRunning
       return
 
+    @isError = false
+
     target = atom.config.get('make-runner.buildTarget')
 
     # figure out number of concurrent make jobs
@@ -114,7 +116,12 @@ module.exports =
           $('<span>').text errormessage
         ]
 
+        @isError = errormessage.indexOf(" error:") is 0
+
+      if @isError
       @makeRunnerView.printError html_line || line
+      else
+        @makeRunnerView.printWarning html_line || line
 
     # fire this off when the make process comes to an end
     make.on 'close',  (code) =>
