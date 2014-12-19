@@ -119,7 +119,7 @@ module.exports =
         @isError = errormessage.indexOf(" error:") is 0
 
       if @isError
-      @makeRunnerView.printError html_line || line
+        @makeRunnerView.printError html_line || line
       else
         @makeRunnerView.printWarning html_line || line
 
