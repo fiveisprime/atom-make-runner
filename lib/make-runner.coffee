@@ -38,12 +38,16 @@ module.exports =
     atom.commands.add 'atom-workspace', 'make-runner:run', => @run()
     atom.commands.add 'atom-workspace', 'make-runner:toggle', => @toggle()
     @makeRunnerView = new MakeRunnerView(state.makeRunnerViewState)
+    @makeRunnerPanel = atom.workspace.addBottomPanel(item: @makeRunnerView, visible: false, className: 'atom-make-runner tool-panel panel-bottom')
 
   #
   # Show/hide the make pane without re-running make
   #
   toggle: ->
-    @makeRunnerView.toggle()
+    if @makeRunnerPanel.isVisible()
+      @makeRunnerPanel.hide()
+    else
+      @makeRunnerPanel.show()
 
   #
   # Run the configured make target.
@@ -87,8 +91,8 @@ module.exports =
 
     # spawn make child process
     @updateStatus "running make..."
-    @makeRunnerView.show()
     @makeRunnerView.clear()
+    @makeRunnerPanel.show()
     @makeRunning = true
     make = cp.spawn 'make', args, { cwd: make_path }
 
