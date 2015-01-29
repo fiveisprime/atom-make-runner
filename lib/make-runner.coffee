@@ -21,21 +21,22 @@ module.exports =
   # Write the status of the make target to the status bar.
   #
   updateStatus: (message) ->
-    atom.workspaceView.statusBar.find('#make-runner').remove()
-    atom.workspaceView.statusBar.appendLeft "<span id=\"make-runner\">Make: #{message}</span>"
+    @statusBarTile?.destroy()
+    statusBar = document.querySelector("status-bar")
+    @statusBarTile = statusBar?.addLeftTile(item: $ "<span id=\"make-runner\">Make: #{message}</span>", priority: 10)
 
   #
   # Clear the make result from the status bar.
   #
   clearStatus: ->
-    atom.workspaceView.statusBar.find('#make-runner').remove()
+    @statusBarTile?.destroy()
 
   #
   # Attach the run command.
   #
   activate: (state) ->
-    atom.workspaceView.command 'make-runner:run', '.editor', => @run()
-    atom.workspaceView.command 'make-runner:toggle', '.editor', => @toggle()
+    atom.commands.add 'atom-workspace', 'make-runner:run', => @run()
+    atom.commands.add 'atom-workspace', 'make-runner:toggle', => @toggle()
     @makeRunnerView = new MakeRunnerView(state.makeRunnerViewState)
 
   #
