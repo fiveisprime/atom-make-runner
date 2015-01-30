@@ -10,7 +10,7 @@ module.exports =
   #
   # Lock flag for running make processes (to avoid running make multiple times concurrently)
   #
-  makeRunning: false
+  makeRunning: null
 
   #
   # Make output pane
@@ -55,6 +55,9 @@ module.exports =
   run: ->
     # guard against launching make while it is still running
     if @makeRunning
+      if atom.config.get('make-runner.killAndRestart')
+        @makeRunning.kill('SIGKILL')
+        @updateStatus "killing make..."
       return
 
     @isError = false
@@ -93,8 +96,7 @@ module.exports =
     @updateStatus "running make..."
     @makeRunnerView.clear()
     @makeRunnerPanel.show()
-    @makeRunning = true
-    make = cp.spawn 'make', args, { cwd: make_path }
+    @makeRunning = make = cp.spawn 'make', args, { cwd: make_path }
 
     # Use readline to generate line input from raw data
     stdout = readline.createInterface { input: make.stdout, terminal: false }
@@ -129,7 +131,15 @@ module.exports =
         @makeRunnerView.printWarning html_line || line
 
     # fire this off when the make process comes to an end
-    make.on 'close',  (code) =>
+    make.on 'close',  (code, signal) =>
+      @makeRunning = null
+
+      # the previous make process was killed successfully
+      if signal is 'SIGKILL'
+        @run()
+        return
+
+      # make exited on its own
       if code is 0
         @updateStatus 'succeeded'
         if atom.config.get('make-runner.hidePane')
@@ -138,8 +148,6 @@ module.exports =
           ), atom.config.get('make-runner.hidePaneDelay')
       else
         @updateStatus "failed with code #{code}"
-
-      @makeRunning = false
 
       setTimeout (=>
         @clearStatus()
@@ -158,9 +166,14 @@ module.exports =
   #
   # Set the default build target.
   #
-  configDefaults:
-    buildTarget: ''
   config:
+    buildTarget:
+      type: 'string'
+      default: ''
+    killAndRestart:
+      type: 'boolean'
+      default: false
+      description: 'Kill and restart the current make process rather than block if make is running.'
     hidePane:
       type: 'boolean'
       default: false
