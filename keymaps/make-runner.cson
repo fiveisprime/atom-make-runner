@@ -1,3 +1,6 @@
-'atom-workspace':
+'atom-text-editor':
   'ctrl-r': 'make-runner:run'
   'ctrl-shift-r': 'make-runner:toggle'
+
+'atom-workspace':
+  'escape': 'make-runner:hide'
