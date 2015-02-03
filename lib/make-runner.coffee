@@ -24,7 +24,7 @@ module.exports =
   updateStatus: (message) ->
     @statusBarTile?.destroy()
     statusBar = document.querySelector("status-bar")
-    @statusBarTile = statusBar?.addLeftTile(item: $ "<span id=\"make-runner\">Make: #{message}</span>", priority: 10)
+    @statusBarTile = statusBar?.addLeftTile(priority: 10, item: $ "<span>Make: #{message}</span>")
 
   #
   # Clear the make result from the status bar.
