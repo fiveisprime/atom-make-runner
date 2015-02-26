@@ -76,6 +76,15 @@ module.exports =
     editor = atom.workspace.activePaneItem
     make_path = editor.getUri()
 
+    if not make_path?
+      @updateStatus "file not saved, nowhere to search for Makefile"
+
+      setTimeout (=>
+        @clearStatus()
+      ), 3000
+
+      return
+
     while not fs.existsSync "#{make_path}/Makefile"
       previous_path = make_path
       make_path = path.join(make_path, '..')
