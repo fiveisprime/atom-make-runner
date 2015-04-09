@@ -2,7 +2,7 @@ cp = require 'child_process'
 path = require 'path'
 fs = require 'fs-plus'
 readline = require 'readline'
-$ = require('atom').$
+{$} = require 'atom-space-pen-views'
 
 MakeRunnerView = require './make-runner-view'
 
@@ -73,8 +73,8 @@ module.exports =
       jobs = require('os').cpus().length
 
     # Get the path of the current file
-    editor = atom.workspace.activePaneItem
-    make_path = editor.getUri()
+    editor = atom.workspace.getActivePaneItem()
+    make_path = editor.getURI()
 
     if not make_path?
       @updateStatus "file not saved, nowhere to search for Makefile"
