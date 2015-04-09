@@ -1,5 +1,4 @@
-{View} = require 'atom'
-$ = require('atom').$
+{$, View} = require 'atom-space-pen-views'
 
 module.exports =
 class MakeRunnerView extends View
