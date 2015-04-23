@@ -128,7 +128,7 @@ module.exports =
               e.preventDefault()
 
               # load file, but check if it is already open in any of the panes
-              loading = atom.workspaceView.open file, { searchAllPanes: true }
+              loading = atom.workspace.open file, { searchAllPanes: true }
               loading.done (editor) =>
                 editor.setCursorBufferPosition [row-1, col-1],
           $('<span>').text errormessage
