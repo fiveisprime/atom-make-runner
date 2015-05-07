@@ -9,9 +9,9 @@
   ],
   "private": true,
   "main": "lib/make-runner.coffee",
-  "activationEvents": [
-    "make-runner:run"
-  ],
+  "activationCommands": {
+      "atom-workspace": ["make-runner:run"]
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/fiveisprime/atom-make-runner.git"
