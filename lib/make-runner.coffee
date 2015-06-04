@@ -57,14 +57,14 @@ module.exports =
   run: ->
     # guard against launching make while it is still running
     if @makeRunning
-      if atom.config.get('make-runner.killAndRestart')
-        @makeRunning.kill('SIGKILL')
+      if atom.config.get 'make-runner.killAndRestart'
+        @makeRunning.kill 'SIGKILL'
         @updateStatus "killing make..."
       return
 
     @isError = false
 
-    target = atom.config.get('make-runner.buildTarget')
+    target = atom.config.get 'make-runner.buildTarget'
 
     # figure out number of concurrent make jobs
     if 'JOBS' in process.env
@@ -72,11 +72,13 @@ module.exports =
     else
       jobs = require('os').cpus().length
 
-    # Get the path of the current file
-    editor = atom.workspace.getActivePaneItem()
-    make_path = editor.getURI()
+    # Check if the active item is a text editor
+    editor = atom.workspace.getActiveTextEditor()
+    return unless editor?
 
-    if not make_path?
+    make_path = editor.getPath()
+
+    unless make_path?
       @updateStatus "file not saved, nowhere to search for Makefile"
 
       setTimeout (=>
@@ -87,7 +89,7 @@ module.exports =
 
     while not fs.existsSync "#{make_path}/Makefile"
       previous_path = make_path
-      make_path = path.join(make_path, '..')
+      make_path = path.join make_path, '..'
 
       if make_path is previous_path
         @updateStatus "no makefile found"
@@ -153,10 +155,10 @@ module.exports =
       # make exited on its own
       if code is 0
         @updateStatus 'succeeded'
-        if atom.config.get('make-runner.hidePane')
+        if atom.config.get 'make-runner.hidePane'
           setTimeout (=>
             @makeRunnerView.destroy()
-          ), atom.config.get('make-runner.hidePaneDelay')
+          ), atom.config.get 'make-runner.hidePaneDelay'
       else
         @updateStatus "failed with code #{code}"
 
