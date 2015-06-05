@@ -36,8 +36,8 @@ module.exports =
   # Attach the run command.
   #
   activate: (state) ->
-    atom.commands.add 'atom-text-editor', 'make-runner:run', => @run()
-    atom.commands.add 'atom-text-editor', 'make-runner:toggle', => @toggle()
+    atom.commands.add 'atom-workspace', 'make-runner:run', => @run()
+    atom.commands.add 'atom-workspace', 'make-runner:toggle', => @toggle()
     atom.commands.add 'atom-workspace', 'core:cancel', => @makeRunnerPanel?.hide()
     @makeRunnerView = new MakeRunnerView state.makeRunnerViewState
     @makeRunnerPanel = atom.workspace.addBottomPanel(item: @makeRunnerView, visible: false, className: 'atom-make-runner tool-panel panel-bottom')
