@@ -39,7 +39,7 @@ module.exports =
     atom.commands.add 'atom-text-editor', 'make-runner:run', => @run()
     atom.commands.add 'atom-text-editor', 'make-runner:toggle', => @toggle()
     atom.commands.add 'atom-workspace', 'core:cancel', => @makeRunnerPanel?.hide()
-    @makeRunnerView = new MakeRunnerView(state.makeRunnerViewState)
+    @makeRunnerView = new MakeRunnerView state.makeRunnerViewState
     @makeRunnerPanel = atom.workspace.addBottomPanel(item: @makeRunnerView, visible: false, className: 'atom-make-runner tool-panel panel-bottom')
 
   #
@@ -157,7 +157,7 @@ module.exports =
         @updateStatus 'succeeded'
         if atom.config.get 'make-runner.hidePane'
           setTimeout (=>
-            @makeRunnerView.destroy()
+            @makeRunnerPanel.hide()
           ), atom.config.get 'make-runner.hidePaneDelay'
       else
         @updateStatus "failed with code #{code}"
