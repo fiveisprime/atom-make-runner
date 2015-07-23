@@ -27,6 +27,13 @@ module.exports =
     @statusBarTile = statusBar?.addLeftTile(priority: 10, item: $ "<span>Make: #{message}</span>")
 
   #
+  # Escape html characters in a string
+  #
+  escape: (line) ->
+    line = line.replace '<', '&lt;'
+    line.replace '>', '&gt;'
+
+  #
   # Clear the make result from the status bar.
   #
   clearStatus: ->
@@ -116,11 +123,12 @@ module.exports =
     stderr = readline.createInterface { input: make.stderr, terminal: false }
 
     stdout.on 'line',  (line) =>
-      @makeRunnerView.printOutput line
+      @makeRunnerView.printOutput @escape(line)
 
     stderr.on 'line',  (line) =>
       # search for file:line:col: references
       html_line = null
+      line = @escape(line)
       line.replace /^([^:]+):(\d+):(\d+):(.*)$/, (match, file, row, col, errormessage) =>
         html_line = [
           $('<a>')
