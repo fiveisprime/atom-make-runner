@@ -39,13 +39,19 @@ module.exports =
   clearStatus: ->
     @statusBarTile?.destroy()
 
+  activate: (state) ->
+    setTimeout (=>
+      @activateLater(state)
+    ), 1000
+
   #
   # Attach the run command.
   #
-  activate: (state) ->
+  activateLater: (state) ->
     atom.commands.add 'atom-workspace', 'make-runner:run', => @run()
     atom.commands.add 'atom-workspace', 'make-runner:toggle', => @toggle()
     atom.commands.add 'atom-workspace', 'core:cancel', => @makeRunnerPanel?.hide()
+    @addTargetsToPalette()
     @makeRunnerView = new MakeRunnerView state.makeRunnerViewState
     @makeRunnerPanel = atom.workspace.addBottomPanel(item: @makeRunnerView, visible: false, className: 'atom-make-runner tool-panel panel-bottom')
 
@@ -61,7 +67,7 @@ module.exports =
   #
   # Run the configured make target.
   #
-  run: ->
+  run: (target = null) ->
     # guard against launching make while it is still running
     if @makeRunning
       if atom.config.get 'make-runner.killAndRestart'
@@ -71,7 +77,8 @@ module.exports =
 
     @isError = false
 
-    target = atom.config.get 'make-runner.buildTarget'
+    if target == null
+      target = atom.config.get 'make-runner.buildTarget'
 
     # figure out number of concurrent make jobs
     if 'JOBS' in process.env
@@ -183,6 +190,44 @@ module.exports =
 
   serialize: ->
     makeRunnerViewState: @makeRunnerView.serialize()
+
+  addTargetsToPalette: ->
+    project = atom.project
+    if project.rootDirectories.length < 1
+      return
+    directory = project.rootDirectories[0]
+
+    directory.getEntries do (self = @) ->
+      (err, entries) ->
+        if err
+          console.log 'Error :', err
+
+        for entry in entries
+          if entry.isFile() and entry.getBaseName() == 'Makefile'
+            self.readTargets(entry.path)
+
+
+  readTargets: (path) ->
+    # use an object for the cache to imitate a set datastructure
+    @_targets = {}
+    fs.readFile path, do (self = @) ->
+      (err, data) ->
+        if err
+          console.log 'error reading makefile:', makefile.path
+          return
+
+        makefileContents = data.toString().split '\n'
+        for line in makefileContents # search each line for a target
+          matches = line.match /(^[a-zA-Z-]{1,}?):/
+
+          # if it matches and it's not already in the cache
+          if matches and matches[1] not in self._targets
+            makefileTarget = matches[1]
+            do (self, makefileTarget) ->
+              atom.commands.add 'atom-workspace', 'make:' + makefileTarget + '', => self.run(makefileTarget)
+            # add it to the cache
+            self._targets[makefileTarget] = makefileTarget
+
 
   #
   # Set the default build target.
