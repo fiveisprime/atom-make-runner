@@ -27,13 +27,6 @@ module.exports =
     @statusBarTile = statusBar?.addLeftTile(priority: 10, item: $ "<span>Make: #{message}</span>")
 
   #
-  # Escape html characters in a string
-  #
-  escape: (line) ->
-    line = line.replace '<', '&lt;'
-    line.replace '>', '&gt;'
-
-  #
   # Clear the make result from the status bar.
   #
   clearStatus: ->
@@ -123,12 +116,11 @@ module.exports =
     stderr = readline.createInterface { input: make.stderr, terminal: false }
 
     stdout.on 'line',  (line) =>
-      @makeRunnerView.printOutput @escape(line)
+      @makeRunnerView.printOutput [ $('<span>').text line ]
 
     stderr.on 'line',  (line) =>
       # search for file:line:col: references
       html_line = null
-      line = @escape(line)
       line.replace /^([^:]+):(\d+):(\d+):(.*)$/, (match, file, row, col, errormessage) =>
         html_line = [
           $('<a>')
@@ -146,10 +138,13 @@ module.exports =
 
         @isError = errormessage.indexOf(" error:") is 0
 
+      # no file:row:col marker found, outputting as plain text
+      html_line ?= [ $('<span>').text line ]
+
       if @isError
-        @makeRunnerView.printError html_line || line
+        @makeRunnerView.printError html_line
       else
-        @makeRunnerView.printWarning html_line || line
+        @makeRunnerView.printWarning html_line
 
     # fire this off when the make process comes to an end
     make.on 'close',  (code, signal) =>
