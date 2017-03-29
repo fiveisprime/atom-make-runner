@@ -1,3 +1,9 @@
-'atom-workspace':
+# Mac
+'.platform-darwin atom-workspace':
   'ctrl-r': 'make-runner:run'
   'ctrl-shift-r': 'make-runner:toggle'
+
+# Linux needs a different shortcut, as ctrl-r collides with the symbol browser
+'.platform-linux atom-workspace, .platform-win32 atom-workspace':
+  'alt-ctrl-r': 'make-runner:run'
+  'alt-ctrl-shift-r': 'make-runner:toggle'
