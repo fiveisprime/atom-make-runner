@@ -131,7 +131,7 @@ module.exports =
 
               # load file, but check if it is already open in any of the panes
               loading = atom.workspace.open file, { searchAllPanes: true }
-              loading.done (editor) =>
+              loading.then (editor) =>
                 editor.setCursorBufferPosition [row-1, col-1],
           $('<span>').text errormessage
         ]
