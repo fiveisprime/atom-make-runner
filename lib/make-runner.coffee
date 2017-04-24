@@ -23,6 +23,8 @@ module.exports =
   makeRunnerPanel: null
   makeRunnerView: null
 
+  targetRE: /^([a-zA-Z0-9-][^$#\/\t%=:]*)\s*:([^=]|$)/
+
   #
   # Write the status of the make target to the status bar.
   #
@@ -44,6 +46,7 @@ module.exports =
     atom.commands.add 'atom-workspace', 'make-runner:run', => @run()
     atom.commands.add 'atom-workspace', 'make-runner:abort', => @abort()
     atom.commands.add 'atom-workspace', 'make-runner:toggle', => @toggle()
+    atom.commands.add 'atom-workspace', 'make-runner:runTarget', => @runTarget()
     atom.commands.add 'atom-workspace', 'core:cancel', => @makeRunnerPanel?.hide()
     @makeRunnerView = new MakeRunnerView state.makeRunnerViewState
     @makeRunnerPanel = atom.workspace.addBottomPanel(item: @makeRunnerView, visible: false, className: 'atom-make-runner tool-panel panel-bottom')
@@ -58,6 +61,40 @@ module.exports =
       @makeRunnerPanel.show()
 
   #
+  # locate the Makefile to use for building
+  #
+  makefilePath: ->
+    # Check if the active item is a text editor
+    editor = atom.workspace.getActiveTextEditor()
+    return unless editor?
+
+    make_path = editor.getPath()
+
+    unless make_path?
+      @updateStatus "file not saved, nowhere to search for Makefile"
+
+      setTimeout (=>
+        @clearStatus()
+      ), 3000
+
+      return null
+
+    while not fs.existsSync "#{make_path}/Makefile"
+      previous_path = make_path
+      make_path = path.join make_path, '..'
+
+      if make_path is previous_path
+        @updateStatus "no makefile found"
+
+        setTimeout (=>
+          @clearStatus()
+        ), 3000
+
+        return null
+
+    return make_path
+
+  #
   # Kill make if it is currently running
   #
   abort: ->
@@ -67,6 +104,32 @@ module.exports =
       @makeCurrentExitHandler = (code, signal) => @makeAbortHandler(code, signal)
       @makeRunning.on 'close', @makeCurrentExitHandler
       @updateStatus "aborting make..."
+
+  #
+  # Obtain a list of valid targets to run make on
+  #
+  runTarget: ->
+    # locate the Makefile
+    make_path = @makefilePath()
+    return unless make_path?
+
+    console.log 'Spawning make...', make_path
+    targetHash = {}
+    targets = []
+
+    @makeRunning = make = cp.spawn 'make', ['-qp'], { cwd: make_path }
+
+    # Use readline to generate line input from raw data
+    stdout = readline.createInterface { input: make.stdout, terminal: false }
+    stdout.on 'line',  (line) =>
+      match = @targetRE.exec line
+      if match? and match[1] != 'Makefile'
+        targetHash[match[1]] = true
+
+    make.on 'close', =>
+      targets = (k for own k of targetHash)
+      targets.sort()
+      console.log targets
 
   #
   # Run the configured make target.
@@ -89,33 +152,9 @@ module.exports =
     else
       jobs = require('os').cpus().length
 
-    # Check if the active item is a text editor
-    editor = atom.workspace.getActiveTextEditor()
-    return unless editor?
-
-    make_path = editor.getPath()
-
-    unless make_path?
-      @updateStatus "file not saved, nowhere to search for Makefile"
-
-      setTimeout (=>
-        @clearStatus()
-      ), 3000
-
-      return
-
-    while not fs.existsSync "#{make_path}/Makefile"
-      previous_path = make_path
-      make_path = path.join make_path, '..'
-
-      if make_path is previous_path
-        @updateStatus "no makefile found"
-
-        setTimeout (=>
-          @clearStatus()
-        ), 3000
-
-        return
+    # locate the Makefile
+    make_path = @makefilePath
+    return unless make_path?
 
     # add number of jobs and possible the make target argument
     args = ['-j', jobs]

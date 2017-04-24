@@ -11,7 +11,8 @@
   "main": "lib/make-runner.coffee",
   "activationCommands": {
     "atom-workspace": [
-      "make-runner:run"
+      "make-runner:run",
+      "make-runner:runTarget"
     ]
   },
   "repository": {
