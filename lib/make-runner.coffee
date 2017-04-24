@@ -5,6 +5,7 @@ readline = require 'readline'
 {$} = require 'atom-space-pen-views'
 
 MakeRunnerView = require './make-runner-view'
+TargetListView = require('./make-runner-target-list-view')
 
 module.exports =
   #
@@ -23,7 +24,11 @@ module.exports =
   makeRunnerPanel: null
   makeRunnerView: null
 
+  #
+  # Make target selection regexp and cache
+  #
   targetRE: /^([a-zA-Z0-9-][^$#\/\t%=:]*)\s*:([^=]|$)/
+  targetCache: {}
 
   #
   # Write the status of the make target to the status bar.
@@ -113,28 +118,40 @@ module.exports =
     make_path = @makefilePath()
     return unless make_path?
 
-    console.log 'Spawning make...', make_path
-    targetHash = {}
-    targets = []
+    if make_path of @targetCache
+      # target list is already cached (TODO: Makefile updated? this is too hard)
+      new TargetListView(@targetCache[make_path], ({name}) => @run name)
 
-    @makeRunning = make = cp.spawn 'make', ['-qp'], { cwd: make_path }
+    else
+      # We need to obtain the target list for the first time
+      @updateStatus "looking up targets..."
+      targetHash = {}
+      targets = []
 
-    # Use readline to generate line input from raw data
-    stdout = readline.createInterface { input: make.stdout, terminal: false }
-    stdout.on 'line',  (line) =>
-      match = @targetRE.exec line
-      if match? and match[1] != 'Makefile'
-        targetHash[match[1]] = true
+      @makeRunning = make = cp.spawn 'make', ['-qp'], { cwd: make_path }
 
-    make.on 'close', =>
-      targets = (k for own k of targetHash)
-      targets.sort()
-      console.log targets
+      # Use readline to generate line input from raw data
+      stdout = readline.createInterface { input: make.stdout, terminal: false }
+      stdout.on 'line',  (line) =>
+        match = @targetRE.exec line
+        if match? and match[1] != 'Makefile'
+          targetHash[match[1]] = true
+
+      @makeCurrentExitHandler = (code, signal) =>
+        @makeRunning = null
+        @clearStatus()
+
+        targets = (k for own k of targetHash)
+        targets.sort()
+        @targetCache[make_path] = targets
+        new TargetListView(targets, ({name}) => @run name)
+
+      make.on 'close', @makeCurrentExitHandler
 
   #
   # Run the configured make target.
   #
-  run: ->
+  run: (target) ->
     # guard against launching make while it is still running
     if @makeRunning
       if atom.config.get 'make-runner.killAndRestart'
@@ -144,7 +161,7 @@ module.exports =
 
     @isError = false
 
-    target = atom.config.get 'make-runner.buildTarget'
+    target ?= atom.config.get 'make-runner.buildTarget'
 
     # figure out number of concurrent make jobs
     if 'JOBS' in process.env
@@ -153,7 +170,7 @@ module.exports =
       jobs = require('os').cpus().length
 
     # locate the Makefile
-    make_path = @makefilePath
+    make_path = @makefilePath()
     return unless make_path?
 
     # add number of jobs and possible the make target argument
