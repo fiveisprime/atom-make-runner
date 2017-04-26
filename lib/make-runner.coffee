@@ -13,6 +13,11 @@ module.exports =
   makeRunning: null
 
   #
+  # Current exit event listener
+  #
+  makeCurrentExitHandler: null
+
+  #
   # Make output panel
   #
   makeRunnerPanel: null
@@ -37,6 +42,7 @@ module.exports =
   #
   activate: (state) ->
     atom.commands.add 'atom-workspace', 'make-runner:run', => @run()
+    atom.commands.add 'atom-workspace', 'make-runner:abort', => @abort()
     atom.commands.add 'atom-workspace', 'make-runner:toggle', => @toggle()
     atom.commands.add 'atom-workspace', 'core:cancel', => @makeRunnerPanel?.hide()
     @makeRunnerView = new MakeRunnerView state.makeRunnerViewState
@@ -52,6 +58,17 @@ module.exports =
       @makeRunnerPanel.show()
 
   #
+  # Kill make if it is currently running
+  #
+  abort: ->
+    if @makeRunning
+      @makeRunning.kill 'SIGKILL'
+      @makeRunning.removeListener 'close', @makeCurrentExitHandler
+      @makeCurrentExitHandler = (code, signal) => @makeAbortHandler(code, signal)
+      @makeRunning.on 'close', @makeCurrentExitHandler
+      @updateStatus "aborting make..."
+
+  #
   # Run the configured make target.
   #
   run: ->
@@ -59,7 +76,7 @@ module.exports =
     if @makeRunning
       if atom.config.get 'make-runner.killAndRestart'
         @makeRunning.kill 'SIGKILL'
-        @updateStatus "killing make..."
+        @updateStatus "restarting make..."
       return
 
     @isError = false
@@ -147,27 +164,52 @@ module.exports =
         @makeRunnerView.printWarning html_line
 
     # fire this off when the make process comes to an end
-    make.on 'close',  (code, signal) =>
-      @makeRunning = null
+    @makeCurrentExitHandler = (code, signal) => @makeExitHandler(code, signal)
+    make.on 'close', @makeCurrentExitHandler
 
-      # the previous make process was killed successfully
-      if signal is 'SIGKILL'
-        @run()
-        return
-
-      # make exited on its own
-      if code is 0
-        @updateStatus 'succeeded'
-        if atom.config.get 'make-runner.hidePane'
-          setTimeout (=>
-            @makeRunnerPanel.hide()
-          ), atom.config.get 'make-runner.hidePaneDelay'
-      else
-        @updateStatus "failed with code #{code}"
-
+  #
+  # if enabled in the configuration, hide the make output pane
+  #
+  hideMakePane: ->
+    if atom.config.get 'make-runner.hidePane'
       setTimeout (=>
-        @clearStatus()
-      ), 3000
+        @makeRunnerPanel.hide()
+      ), atom.config.get 'make-runner.hidePaneDelay'
+
+  #
+  # Regular make exit handler
+  #
+  makeExitHandler: (code, signal) ->
+    @makeRunning = null
+
+    # the previous make process was killed successfully
+    if signal is 'SIGKILL'
+      @run()
+      return
+
+    # make exited on its own
+    if code is 0
+      @updateStatus 'succeeded'
+      @hideMakePane
+    else
+      @updateStatus "failed with code #{code}"
+
+    setTimeout (=>
+      @clearStatus()
+    ), 3000
+
+  #
+  # make abort exit handler
+  #
+  makeAbortHandler: (code, signal) ->
+    @makeRunning = null
+
+    @updateStatus 'aborted'
+
+    setTimeout (=>
+      @clearStatus()
+    ), 3000
+
 
   #
   # Deactivate the package.
