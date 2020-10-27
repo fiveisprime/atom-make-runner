@@ -5,6 +5,7 @@ readline = require 'readline'
 {$} = require 'atom-space-pen-views'
 
 MakeRunnerView = require './make-runner-view'
+TargetListView = require('./make-runner-target-list-view')
 
 module.exports =
   #
@@ -22,6 +23,12 @@ module.exports =
   #
   makeRunnerPanel: null
   makeRunnerView: null
+
+  #
+  # Make target selection regexp and cache
+  #
+  targetRE: /^([a-zA-Z0-9-][^$#\/\t%=:]*)\s*:([^=]|$)/
+  targetCache: {}
 
   #
   # Write the status of the make target to the status bar.
@@ -44,6 +51,7 @@ module.exports =
     atom.commands.add 'atom-workspace', 'make-runner:run', => @run()
     atom.commands.add 'atom-workspace', 'make-runner:abort', => @abort()
     atom.commands.add 'atom-workspace', 'make-runner:toggle', => @toggle()
+    atom.commands.add 'atom-workspace', 'make-runner:runTarget', => @runTarget()
     atom.commands.add 'atom-workspace', 'core:cancel', => @makeRunnerPanel?.hide()
     @makeRunnerView = new MakeRunnerView state.makeRunnerViewState
     @makeRunnerPanel = atom.workspace.addBottomPanel(item: @makeRunnerView, visible: false, className: 'atom-make-runner tool-panel panel-bottom')
@@ -58,37 +66,9 @@ module.exports =
       @makeRunnerPanel.show()
 
   #
-  # Kill make if it is currently running
+  # locate the Makefile to use for building
   #
-  abort: ->
-    if @makeRunning
-      @makeRunning.kill 'SIGKILL'
-      @makeRunning.removeListener 'close', @makeCurrentExitHandler
-      @makeCurrentExitHandler = (code, signal) => @makeAbortHandler(code, signal)
-      @makeRunning.on 'close', @makeCurrentExitHandler
-      @updateStatus "aborting make..."
-
-  #
-  # Run the configured make target.
-  #
-  run: ->
-    # guard against launching make while it is still running
-    if @makeRunning
-      if atom.config.get 'make-runner.killAndRestart'
-        @makeRunning.kill 'SIGKILL'
-        @updateStatus "restarting make..."
-      return
-
-    @isError = false
-
-    target = atom.config.get 'make-runner.buildTarget'
-
-    # figure out number of concurrent make jobs
-    if 'JOBS' in process.env
-      jobs = process.env.JOBS
-    else
-      jobs = require('os').cpus().length
-
+  makefilePath: ->
     # Check if the active item is a text editor
     editor = atom.workspace.getActiveTextEditor()
     return unless editor?
@@ -102,7 +82,7 @@ module.exports =
         @clearStatus()
       ), 3000
 
-      return
+      return null
 
     while not fs.existsSync "#{make_path}/Makefile"
       previous_path = make_path
@@ -115,7 +95,83 @@ module.exports =
           @clearStatus()
         ), 3000
 
-        return
+        return null
+
+    return make_path
+
+  #
+  # Kill make if it is currently running
+  #
+  abort: ->
+    if @makeRunning
+      @makeRunning.kill 'SIGKILL'
+      @makeRunning.removeListener 'close', @makeCurrentExitHandler
+      @makeCurrentExitHandler = (code, signal) => @makeAbortHandler(code, signal)
+      @makeRunning.on 'close', @makeCurrentExitHandler
+      @updateStatus "aborting make..."
+
+  #
+  # Obtain a list of valid targets to run make on
+  #
+  runTarget: ->
+    # locate the Makefile
+    make_path = @makefilePath()
+    return unless make_path?
+
+    if make_path of @targetCache
+      # target list is already cached (TODO: Makefile updated? this is too hard)
+      new TargetListView(@targetCache[make_path], ({name}) => @run name)
+
+    else
+      # We need to obtain the target list for the first time
+      @updateStatus "looking up targets..."
+      targetHash = {}
+      targets = []
+
+      @makeRunning = make = cp.spawn 'make', ['-qp'], { cwd: make_path }
+
+      # Use readline to generate line input from raw data
+      stdout = readline.createInterface { input: make.stdout, terminal: false }
+      stdout.on 'line',  (line) =>
+        match = @targetRE.exec line
+        if match? and match[1] != 'Makefile'
+          targetHash[match[1]] = true
+
+      @makeCurrentExitHandler = (code, signal) =>
+        @makeRunning = null
+        @clearStatus()
+
+        targets = (k for own k of targetHash)
+        targets.sort()
+        @targetCache[make_path] = targets
+        new TargetListView(targets, ({name}) => @run name)
+
+      make.on 'close', @makeCurrentExitHandler
+
+  #
+  # Run the configured make target.
+  #
+  run: (target) ->
+    # guard against launching make while it is still running
+    if @makeRunning
+      if atom.config.get 'make-runner.killAndRestart'
+        @makeRunning.kill 'SIGKILL'
+        @updateStatus "restarting make..."
+      return
+
+    @isError = false
+
+    target ?= atom.config.get 'make-runner.buildTarget'
+
+    # figure out number of concurrent make jobs
+    if 'JOBS' in process.env
+      jobs = process.env.JOBS
+    else
+      jobs = require('os').cpus().length
+
+    # locate the Makefile
+    make_path = @makefilePath()
+    return unless make_path?
 
     # add number of jobs and possible the make target argument
     args = ['-j', jobs]
